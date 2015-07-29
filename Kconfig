@@ -1,0 +1,11 @@
+
+menu "Amlogic Av Det Support"
+
+config AMLOGIC_AV_DET
+	bool "Amlogic Av Det support"
+	select SETIO_CLASS_DEVICE
+	default y
+	help
+	  Say Y here if you want to use the amlogic system led management.
+
+endmenu
