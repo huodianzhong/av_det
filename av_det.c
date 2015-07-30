@@ -153,7 +153,7 @@ static ssize_t get_val(struct device *dev, struct device_attribute *attr, char *
 {
 	return sprintf(buf, "%d\n", audio_mode_s);
 }
-static DEVICE_ATTR(audio_mode, 0644, get_val, av_det_val);
+static DEVICE_ATTR(audio_mode, 0666, get_val, av_det_val);
 static int aml_is_av_insert(struct aml_av_det_platform_data *pdata)
 {
 	int ret = -1;
@@ -269,7 +269,7 @@ static ssize_t class_get_val(struct class *cla, struct class_attribute *attr, ch
 }
 //static CLASS_ATTR(audio_mode, 0644, class_get_val, class_av_det_val);
 static struct class_attribute av_det_class_attrs[] = {
-	__ATTR(audio_mode, S_IRWXU, class_get_val, class_av_det_val),
+	__ATTR(audio_mode, 0666, class_get_val, class_av_det_val),
 	__ATTR_NULL
 };
 static struct class av_det_class = {
