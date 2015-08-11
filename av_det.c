@@ -37,7 +37,10 @@
 
 
 #define OWNER_NAME   "aml-avdet"
+/*detect av insert by timer,if not define by interrupt */
 #define TIMER_DET
+/*audio control(mute&unmute) by driver */
+#define AUDIO_CONTROL_DRIVER 
 
 struct aml_av_det_platform_data {
 	const char *name;
@@ -89,40 +92,40 @@ static int audio_control(unsigned int audio_mode )
 	switch(audio_mode)
 	{
 		case I2S_AUDIO_OUTPUT:
-					audio_mode_s = 0;
-					gpio_direction_output(amlav_det->pdata[0].audio_sel_pin,1);
-					printk(KERN_INFO"audio_sel_pin set I2S_AUDIO_OUTPUT!\n");
-    		break;
-    case COAXIAL_OUTPUT:
-					audio_mode_s = 1;
-					gpio_direction_output(amlav_det->pdata[0].audio_sel_pin,0);
-					printk(KERN_INFO"audio_sel_pin set COAXIAL_OUTPUT!\n");
-    		break;
-    case AV_AUDIO_MUTE:
-    			audio_mode_s = 2;
-    			aml_audio_i2s_mute();
-    			printk(KERN_INFO"AV_AUDIO_MUTE!\n");
-    		break;
-    case AV_AUDIO_UNMUTE:
-    			audio_mode_s = 3;
-    			aml_audio_i2s_unmute();
-    			printk(KERN_INFO"AV_AUDIO_UNMUTE!\n");
-    		break;
-    case HDMI_AUDIO_MUTE:
-    			audio_mode_s = 4;
-    			printk(KERN_INFO"HDMI_AUDIO_MUTE!\n");
-    		break;
-    case HDMI_AUDIO_UNMUTE:
-    			audio_mode_s = 5;
-    			printk(KERN_INFO"HDMI_AUDIO_UNMUTE!\n");
-    		break;
-    default:
-    		break;
+			audio_mode_s = 0;
+			gpio_direction_output(amlav_det->pdata[0].audio_sel_pin,1);
+			printk(KERN_INFO"audio_sel_pin set I2S_AUDIO_OUTPUT!\n");
+			break;
+		case COAXIAL_OUTPUT:
+			audio_mode_s = 1;
+			gpio_direction_output(amlav_det->pdata[0].audio_sel_pin,0);
+			printk(KERN_INFO"audio_sel_pin set COAXIAL_OUTPUT!\n");
+			break;
+		case AV_AUDIO_MUTE:
+			audio_mode_s = 2;
+			aml_audio_i2s_mute();
+			printk(KERN_INFO"AV_AUDIO_MUTE!\n");
+			break;
+		case AV_AUDIO_UNMUTE:
+			audio_mode_s = 3;
+			aml_audio_i2s_unmute();
+			printk(KERN_INFO"AV_AUDIO_UNMUTE!\n");
+			break;
+		case HDMI_AUDIO_MUTE:
+			audio_mode_s = 4;
+			printk(KERN_INFO"HDMI_AUDIO_MUTE!\n");
+			break;
+		case HDMI_AUDIO_UNMUTE:
+			audio_mode_s = 5;
+			printk(KERN_INFO"HDMI_AUDIO_UNMUTE!\n");
+			break;
+		default:
+			break;
   }
   return 0;
 }
-#ifndef TIMER_DET
-void audio_det_av_chaneg(int av_insert)
+#if (!defined(TIMER_DET) || defined(AUDIO_CONTROL_DRIVER))
+void audio_det_av_change(int av_insert)
 {
 	switch(av_insert)
 	{
@@ -164,10 +167,13 @@ static int aml_is_av_insert(struct aml_av_det_platform_data *pdata)
 		//audio handle
 	#ifndef TIMER_DET
 		printk(KERN_INFO"AV %s\n", ret?"OUT":"IN");
-		audio_det_av_chaneg(ret);/*audio mode change by driver */
+		audio_det_av_change(ret);/*audio mode change by driver */
 	#else/*define TIMER_DET */
 		if(det_flag != ret){
 			det_flag = ret;
+		#ifdef AUDIO_CONTROL_DRIVER
+			audio_det_av_change(ret);/*audio mode change by driver */
+		#endif
 			printk(KERN_INFO"AV %s\n", ret?"OUT":"IN");
 			if(ret == 0){
 				/* AV in*/
