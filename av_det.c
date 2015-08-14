@@ -86,6 +86,7 @@ static int det_flag = 2; /*0:av in,1,av:out,2:first boot check*/
 #endif
 extern void aml_audio_i2s_mute(void);/* both i2s and spdif mute*/
 extern void aml_audio_i2s_unmute(void);/* both i2s and spdif unmute*/
+extern void hdmitx_audio_mute_op(unsigned int flag);
 static int audio_control(unsigned int audio_mode )
 {
 	struct aml_av_det *amlav_det = Myamlav_det;
@@ -113,10 +114,12 @@ static int audio_control(unsigned int audio_mode )
 			break;
 		case HDMI_AUDIO_MUTE:
 			audio_mode_s = 4;
+			hdmitx_audio_mute_op(0);
 			printk(KERN_INFO"HDMI_AUDIO_MUTE!\n");
 			break;
 		case HDMI_AUDIO_UNMUTE:
 			audio_mode_s = 5;
+			hdmitx_audio_mute_op(1);
 			printk(KERN_INFO"HDMI_AUDIO_UNMUTE!\n");
 			break;
 		default:
