@@ -33,8 +33,7 @@
 #include <linux/slab.h>
 #include <linux/switch.h>
 #include <linux/timer.h>
-//#include <linux/sysfs.h>
-
+#include <linux/amlogic/sound/aiu_regs.h>
 
 #define OWNER_NAME   "aml-avdet"
 /*detect av insert by timer,if not define by interrupt */
@@ -81,12 +80,24 @@ static struct aml_av_det *Myamlav_det = NULL;
 unsigned int audio_mode_s = 0;
 #ifdef TIMER_DET
 static struct timer_list g_timer;
-unsigned int  det_delay_10ms = 20;/* av det check delay,unit 10ms*/
+unsigned int  det_delay_10ms = 100;/* av det check delay,unit 10ms*/
 static int det_flag = 2; /*0:av in,1,av:out,2:first boot check*/
 #endif
 extern void aml_audio_i2s_mute(void);/* both i2s and spdif mute*/
 extern void aml_audio_i2s_unmute(void);/* both i2s and spdif unmute*/
 extern void hdmitx_audio_mute_op(unsigned int flag);
+
+static void aml_pin_mux_switch(struct platform_device *pdev, unsigned int mode)
+{
+	struct pinctrl *pin_ctl;
+	char *name[2] = {
+		"i2s_aml_clk_pins",
+		"clear_i2s_clk_pins",
+	};
+	pin_ctl = devm_pinctrl_get_select(&pdev->dev, name[mode]);
+	if (IS_ERR(pin_ctl))
+		printk(KERN_ERR"%s pinmux set error!\n",name[mode]);
+}
 static int audio_control(unsigned int audio_mode)
 {
 	struct aml_av_det *amlav_det = Myamlav_det;
@@ -105,12 +116,14 @@ static int audio_control(unsigned int audio_mode)
 		case AV_AUDIO_MUTE:
 			audio_mode_s = 2;
 			aml_audio_i2s_mute();
-			printk(KERN_INFO"AV_AUDIO_MUTE!\n");
+			aml_pin_mux_switch(amlav_det->pdev,1);
+			printk(KERN_INFO"AV_AUDIO_MUTE!,SCLK pinmux clear\n");
 			break;
 		case AV_AUDIO_UNMUTE:
 			audio_mode_s = 3;
 			aml_audio_i2s_unmute();
-			printk(KERN_INFO"AV_AUDIO_UNMUTE!\n");
+			aml_pin_mux_switch(amlav_det->pdev,0);
+			printk(KERN_INFO"AV_AUDIO_UNMUTE!,SCLK pinmux set\n");
 			break;
 		case HDMI_AUDIO_MUTE:
 			audio_mode_s = 4;
