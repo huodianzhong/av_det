@@ -33,7 +33,7 @@
 #include <linux/slab.h>
 #include <linux/switch.h>
 #include <linux/timer.h>
-#include <linux/amlogic/sound/aiu_regs.h>
+
 
 #define OWNER_NAME   "aml-avdet"
 /*detect av insert by timer,if not define by interrupt */
@@ -81,7 +81,7 @@ unsigned int audio_mode_s = 0;
 #ifdef TIMER_DET
 static struct timer_list g_timer;
 unsigned int  det_delay_10ms = 100;/* av det check delay,unit 10ms*/
-static int det_flag = 2; /*0:av in,1,av:out,2:first boot check*/
+unsigned int det_flag = 2; /*0:av in,1,av:out,2:first boot check*/
 #endif
 extern void aml_audio_i2s_mute(void);/* both i2s and spdif mute*/
 extern void aml_audio_i2s_unmute(void);/* both i2s and spdif unmute*/
@@ -117,13 +117,13 @@ static int audio_control(unsigned int audio_mode)
 			audio_mode_s = 2;
 			aml_audio_i2s_mute();
 			aml_pin_mux_switch(amlav_det->pdev,1);
-			printk(KERN_INFO"AV_AUDIO_MUTE!,SCLK pinmux clear\n");
+			printk(KERN_INFO"AV_AUDIO_MUTE!,LR_CLK pinmux clear\n");
 			break;
 		case AV_AUDIO_UNMUTE:
 			audio_mode_s = 3;
 			aml_audio_i2s_unmute();
 			aml_pin_mux_switch(amlav_det->pdev,0);
-			printk(KERN_INFO"AV_AUDIO_UNMUTE!,SCLK pinmux set\n");
+			printk(KERN_INFO"AV_AUDIO_UNMUTE!,LR_CLK pinmux set\n");
 			break;
 		case HDMI_AUDIO_MUTE:
 			audio_mode_s = 4;
@@ -190,6 +190,7 @@ static int aml_is_av_insert(struct aml_av_det_platform_data *pdata)
 			audio_det_av_change(ret);/*audio mode change by driver */
 #endif
 			printk(KERN_INFO"AV %s\n", ret?"OUT":"IN");
+#ifdef ANDROID_SWITCH_H2W
 			if (ret == 0) {
 				/* AV in*/
 				switch_set_state(&pdata->sdev, 2);  // 1 :have mic ;  2 no mic
@@ -199,6 +200,7 @@ static int aml_is_av_insert(struct aml_av_det_platform_data *pdata)
 				switch_set_state(&pdata->sdev, 0);
 				printk(KERN_INFO "switch_set_state: 0 \n");
 			}
+#endif/* end ANDROID_SWITCH_H2W */
 		}
 #endif/*end TIMER_DET */
 	} else {
@@ -529,7 +531,9 @@ static int __exit aml_av_det_remove(struct platform_device *pdev)
 
 	return 0;
 }
-
+#ifdef TIMER_DET
+EXPORT_SYMBOL(det_flag);
+#endif
 static struct platform_driver aml_av_det_driver = {
 	.driver = {
 		.name = "aml_av_det",
